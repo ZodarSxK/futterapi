@@ -19,7 +19,7 @@ app.listen(3000, () => {
 });
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+//!--------------------------------------------------------------------------------------------------------------------------
 
 // แสดงผล
 app.get("/", function (req, res) {
@@ -54,24 +54,27 @@ app.get("/orderall", function (req, res) {
   });
 });
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+//!--------------------------------------------------------------------------------------------------------------------------
 
 
 // ส่งค่าไปเพิ่อเพิ่มข้อมูลใน ฐานข้อมูล
-app.post('/insertorder', function (req, res) {
+app.post('/order', function (req, res) {
     // รับค่าผ่าน form post
     let data = {
         cust_id: req.body.cust_id,
         product_name: req.body.product_name,
         order_num: req.body.order_num,
         product_source: req.body.product_source,
-        price: req.body.price
+        amount: req.body.amount
     }
 
  // บันทึกข้อมูลลง db
     let sql = 'INSERT INTO tb_order SET ?'
+    
+
     db.query(sql, data, (err, results, fields) => {
         if (err) {
+            console.log(err)
             res.status(500).json({
                 'status': 500,
                 'message': 'ไม่สามารถเพิ่มข้อมูลได้ :' + err.sqlMessage
@@ -85,26 +88,34 @@ app.post('/insertorder', function (req, res) {
         }
     })
 })
+//!--------------------------------------------------------------------------------------------------------------------------
 
-app.get('/deleteorder', function (req, res) {
+app.delete('/order/:cust_id/product/:product_name', function (req, res) {
   // รับค่าผ่าน form post
-  let data = {
-      cust_id: req.body.cust_id,
-      product_name: req.body.product_name
-  }
+   let data= {
+     cust_id  :req.params.cust_id,
+     product_name : req.params.product_name
+   }
+  //  let order_no = req.params.id;
+    // let product_name = req.body.product_name;
+    
+  
+  
 
 // บันทึกข้อมูลลง db
-  let sql = 'INSERT INTO tb_order SET ?'
-  db.query(sql, data, (err, results, fields) => {
+  // let sql = 'DELETE FROM tb_order WHERE product_name=?'
+  let sql = "DELETE FROM tb_order WHERE cust_id=? and product_name=?";
+  db.query(sql, [data.cust_id,data.product_name], (err, results, fields) => {
       if (err) {
+          console.log(err)
           res.status(500).json({
               'status': 500,
-              'message': 'ไม่สามารถเพิ่มข้อมูลได้ :' + err.sqlMessage
+              'message': 'ไม่สามารถลบข้อมูลได้ :' + err.sqlMessage
           })
       } else {
           let result = {
               'status' : 200,
-              'message' : 'เพิ่มข้อมูลเรียบร้อย'
+              'message' : 'ลบข้อมูลเรียบร้อย'
           }
           res.json(result)
       }
@@ -112,15 +123,17 @@ app.get('/deleteorder', function (req, res) {
 })
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
+//!--------------------------------------------------------------------------------------------------------------------------
 
 //select where
 
-app.get('/orderwherecust_id',function(req,res){
+app.get('/order/:cust_id',function(req,res){
     // รับค่าผ่าน form get
-    let cust_id = req.query.cust_id
+    let cust_id = req.params.cust_id
     // ติดต่อ db
-    let sql = 'SELECT order_no,product_name,order_num,product_source,price FROM tb_order WHERE cust_id=?'
+     //let sql = 'SELECT order_no,product_name,product_source,order_num,amount FROM tb_order WHERE cust_id=?'
+   // let sql = 'SELECT product_name, SUM(order_num*amount) FROM tb_order WHERE cust_id=? GROUPBY product_name'
+    let sql='SELECT order_no,product_name,product_source,order_num,amount,SUM(order_num)piece, (SUM(order_num)*amount)price  FROM tb_order GROUP BY product_name'
     db.query(sql, cust_id, (err, results, fields) => {
         if (err) {
             res.status(500).json({

@@ -4,7 +4,7 @@ const mysql=require('mysql');
         host : 'localhost',
         user : 'root',
         password : '',
-        database : 'db_futter1'
+        database : 'db_futter1',
     })
     db.connect((err)=>{
         if(err){
